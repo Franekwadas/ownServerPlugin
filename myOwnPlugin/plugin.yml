@@ -1,0 +1,12 @@
+main: ownplugin.myownplugin.main.Main
+name: ServerOwnPlugin
+version: 1.0.0
+author: uiuiuoisad
+
+commands:
+  pomoc:
+  msg:
+  setOwner:
+  statystyki:
+  clear:
+  chat:
