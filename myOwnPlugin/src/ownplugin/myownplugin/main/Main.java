@@ -101,6 +101,28 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener {
 			wiadomosc = wiadomosc.replace("cipa", "****");
 			wiadomosc = wiadomosc.replace("kurwy", "*****");
 			Bukkit.broadcastMessage(wiadomosc);
+		} else if (p.hasPermission("ownServerPlugin.egzorcystaGroup")){
+			e.setCancelled(true);
+			String wiadomosc = (ChatColor.AQUA + "" + ChatColor.BOLD + "Egzorcysta " + ChatColor.GRAY + p.getName() + ChatColor.AQUA + " >> " + ChatColor.GRAY + msg);
+			wiadomosc = wiadomosc.replace("japierdole", "**********");
+			wiadomosc = wiadomosc.replace("suko", "****");
+			wiadomosc = wiadomosc.replace("suka", "****");
+			wiadomosc = wiadomosc.replace("jebana", "******");
+			wiadomosc = wiadomosc.replace("jebany", "******");
+			wiadomosc = wiadomosc.replace("kurwa", "*****");
+			wiadomosc = wiadomosc.replace("pierdole", "********");
+			wiadomosc = wiadomosc.replace("wypierdalaj", "***********");
+			wiadomosc = wiadomosc.replace("spierdalaj", "**********");
+			wiadomosc = wiadomosc.replace("wykurwiaj", "*********");
+			wiadomosc = wiadomosc.replace("chuju", "*****");
+			wiadomosc = wiadomosc.replace("kurwo", "*****");
+			wiadomosc = wiadomosc.replace("cipo", "****");
+			wiadomosc = wiadomosc.replace("pierdolona", "**********");
+			wiadomosc = wiadomosc.replace("pierdol", "*******");
+			wiadomosc = wiadomosc.replace("rucham", "******");
+			wiadomosc = wiadomosc.replace("cipa", "****");
+			wiadomosc = wiadomosc.replace("kurwy", "*****");
+			Bukkit.broadcastMessage(wiadomosc);
 		} else {
 			e.setCancelled(true);
 			String wiadomosc = (ChatColor.GREEN + "" + ChatColor.BOLD + "Gracz " + ChatColor.GRAY + p.getName() + ChatColor.AQUA + " >> " + ChatColor.GRAY + msg);
