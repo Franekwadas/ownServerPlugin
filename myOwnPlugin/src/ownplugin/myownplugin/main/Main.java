@@ -14,6 +14,8 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerChatEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -37,15 +39,35 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener {
 	}
 	
 	@EventHandler(priority = EventPriority.NORMAL)
-	public void stoneBreakeEvent(BlockBreakEvent e) {
+	public void BlockBreakeEvent(BlockBreakEvent e) {
 		Player p = e.getPlayer();
-			
-		File f = new File("plugins/ServerOwnPlugin/statystyki.yml");
+		File f = new File("plugins/ServerOwnPlugin/autorization.yml");
 		YamlConfiguration yamlFile = YamlConfiguration.loadConfiguration(f);
-		if (yamlFile.get(p.getName() + ".bloki") == null) yamlFile.set(p.getName() + ".bloki", 0);
-		yamlFile.set(p.getName() + ".bloki", yamlFile.getInt(p.getName() + ".bloki") + 1);
+		
+		if (yamlFile.get(p.getName() + ".register") == null) {
+			p.kickPlayer(ChatColor.RED + "Zosta³ dodany plugin na logowanie! Prosze wejœæ i sie zarejestrowaæ");
+		} else if (yamlFile.getBoolean(p.getName() + ".register") == true) {
+			e.setCancelled(true);
+			p.sendMessage(ChatColor.RED + "Najpierw sie zarejestruj korzystaj¹c z /register <has³o>");
+		} else if (yamlFile.get(p.getName() + ".login") == null) {
+			if (yamlFile.getString(p.getName() + ".password") == null) {
+				p.kickPlayer(ChatColor.RED + "Z nieoczekiwanego powodu twoje has³o prawdopodobnie zosta³o zrestartowane" + "\n" + "Proszê wejœæ na nowo i siê jeszcze raz zarejestrowaæ.");
+			} else {
+				p.kickPlayer(ChatColor.RED + "Wyst¹pi³ nieoczekiwany b³¹d" + "\n" + "Proszê wejœæ na nowo.");
+			}
+		} else if (yamlFile.getBoolean(p.getName() + ".login") == true) {
+			
+			e.setCancelled(true);
+			p.sendMessage(ChatColor.RED + "Najpierw sie zalogouj korzystaj¹c z /login <has³o>");
+			
+		}
+		
+		File f2 = new File("plugins/ServerOwnPlugin/statystyki.yml");
+		YamlConfiguration yamlFile2 = YamlConfiguration.loadConfiguration(f2);
+		if (yamlFile2.get(p.getName() + ".bloki") == null) yamlFile2.set(p.getName() + ".bloki", 0);
+		yamlFile2.set(p.getName() + ".bloki", yamlFile2.getInt(p.getName() + ".bloki") + 1);
 		try {
-			yamlFile.save(f);
+			yamlFile2.save(f2);
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
@@ -70,8 +92,70 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener {
 	}
 	
 	@EventHandler(priority = EventPriority.NORMAL)
+	public void onMove(PlayerMoveEvent e) {
+		
+		Player p = e.getPlayer();
+		
+		File f = new File("plugins/ServerOwnPlugin/autorization.yml");
+		YamlConfiguration yamlFile = YamlConfiguration.loadConfiguration(f);
+		
+		if (yamlFile.get(p.getName() + ".register") == null) {
+			p.kickPlayer(ChatColor.RED + "Zosta³ dodany plugin na logowanie! Prosze wejœæ i sie zarejestrowaæ");
+		} else if (yamlFile.getBoolean(p.getName() + ".register") == true) {
+			e.setCancelled(true);
+			p.sendMessage(ChatColor.RED + "Najpierw sie zarejestruj korzystaj¹c z /register <has³o> ");
+		} else if (yamlFile.get(p.getName() + ".login") == null) {
+			if (yamlFile.getString(p.getName() + ".password") == null) {
+				p.kickPlayer(ChatColor.RED + "Z nieoczekiwanego powodu twoje has³o prawdopodobnie zosta³o zrestartowane" + "\n" + "Proszê wejœæ na nowo i siê jeszcze raz zarejestrowaæ.");
+			} else {
+				p.kickPlayer(ChatColor.RED + "Wyst¹pi³ nieoczekiwany b³¹d" + "\n" + "Proszê wejœæ na nowo.");
+			}
+		} else if (yamlFile.getBoolean(p.getName() + ".login") == true) {
+			
+			e.setCancelled(true);
+			p.sendMessage(ChatColor.RED + "Najpierw sie zalogouj korzystaj¹c z /login <has³o>");
+			
+		}
+		
+	}
+	
+	@EventHandler(priority = EventPriority.NORMAL)
+	public void onPlayerJoin(PlayerJoinEvent e) {
+		Player p = e.getPlayer();
+		File f = new File("plugins/ServerOwnPlugin/autorization.yml");
+		YamlConfiguration yamlFile = YamlConfiguration.loadConfiguration(f);
+		String password = yamlFile.getString(p.getName() + ".password");
+		yamlFile.set(p.getName() + ".tryToLogin", 0);
+		if (password == null) {
+			yamlFile.set(p.getName() + ".register", true);
+			p.sendMessage(ChatColor.GREEN + "Witamy na naszym serwerze! Wpisz komende /register <haslo>  aby siê zarejestrowaæ!");
+		} else {
+			yamlFile.set(p.getName() + ".login", true);
+			p.sendMessage(ChatColor.GREEN + "Witamy na naszym serwerze! Wpisz komende /login <haslo> aby siê zalogowaæ!");
+		}
+		
+		try {
+			yamlFile.save(f);
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+	}
+	
+	@EventHandler(priority = EventPriority.NORMAL)
 	public void onMessage(PlayerChatEvent e) {
 		Player p = e.getPlayer();
+		//sprawdzanie czy gracz jest zalogowany/zarejestrowany
+		File f = new File("plugins/ServerOwnPlugin/autorization.yml");
+		YamlConfiguration yamlFile = YamlConfiguration.loadConfiguration(f);
+		boolean register = yamlFile.getBoolean(p.getName() + ".register");
+		boolean login = yamlFile.getBoolean(p.getName() + ".login");
+		if (register == true) {
+			e.setCancelled(true);
+			p.sendMessage(ChatColor.RED + "Najpierw sie zarejestruj korzystaj¹c z /register <has³o> ");
+		} else if (login == true) {
+			e.setCancelled(true);
+			p.sendMessage(ChatColor.RED + "Najpierw sie zalogouj korzystaj¹c z /login <has³o>");
+		}
 		String msg = e.getMessage();
 		if(getConfig().get("chatIsEnable") == null) getConfig().set("chatIsEnable", true);
 		if(getConfig().getBoolean("chatIsEnable") == false) {
@@ -79,74 +163,99 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener {
 			p.sendMessage(ChatColor.RED + "Nie mo¿esz teraz pisaæ poniewa¿ czat jest wy³¹czony!");
 		}
 		
-		if	(p.hasPermission("ownServerPlugin.adminGroup")) {
-			e.setCancelled(true);
-			String wiadomosc = (ChatColor.DARK_RED + "" + ChatColor.BOLD + "Administrator " + ChatColor.GRAY + p.getName() + ChatColor.AQUA + " >> " + ChatColor.GOLD + msg);
-			wiadomosc = wiadomosc.replace("japierdole", "**********");
-			wiadomosc = wiadomosc.replace("suko", "****");
-			wiadomosc = wiadomosc.replace("suka", "****");
-			wiadomosc = wiadomosc.replace("jebana", "******");
-			wiadomosc = wiadomosc.replace("jebany", "******");
-			wiadomosc = wiadomosc.replace("kurwa", "*****");
-			wiadomosc = wiadomosc.replace("pierdole", "********");
-			wiadomosc = wiadomosc.replace("wypierdalaj", "***********");
-			wiadomosc = wiadomosc.replace("spierdalaj", "**********");
-			wiadomosc = wiadomosc.replace("wykurwiaj", "*********");
-			wiadomosc = wiadomosc.replace("chuju", "*****");
-			wiadomosc = wiadomosc.replace("kurwo", "*****");
-			wiadomosc = wiadomosc.replace("cipo", "****");
-			wiadomosc = wiadomosc.replace("pierdolona", "**********");
-			wiadomosc = wiadomosc.replace("pierdol", "*******");
-			wiadomosc = wiadomosc.replace("rucham", "******");
-			wiadomosc = wiadomosc.replace("cipa", "****");
-			wiadomosc = wiadomosc.replace("kurwy", "*****");
-			Bukkit.broadcastMessage(wiadomosc);
-		} else if (p.hasPermission("ownServerPlugin.egzorcystaGroup")){
-			e.setCancelled(true);
-			String wiadomosc = (ChatColor.AQUA + "" + ChatColor.BOLD + "Egzorcysta " + ChatColor.GRAY + p.getName() + ChatColor.AQUA + " >> " + ChatColor.GRAY + msg);
-			wiadomosc = wiadomosc.replace("japierdole", "**********");
-			wiadomosc = wiadomosc.replace("suko", "****");
-			wiadomosc = wiadomosc.replace("suka", "****");
-			wiadomosc = wiadomosc.replace("jebana", "******");
-			wiadomosc = wiadomosc.replace("jebany", "******");
-			wiadomosc = wiadomosc.replace("kurwa", "*****");
-			wiadomosc = wiadomosc.replace("pierdole", "********");
-			wiadomosc = wiadomosc.replace("wypierdalaj", "***********");
-			wiadomosc = wiadomosc.replace("spierdalaj", "**********");
-			wiadomosc = wiadomosc.replace("wykurwiaj", "*********");
-			wiadomosc = wiadomosc.replace("chuju", "*****");
-			wiadomosc = wiadomosc.replace("kurwo", "*****");
-			wiadomosc = wiadomosc.replace("cipo", "****");
-			wiadomosc = wiadomosc.replace("pierdolona", "**********");
-			wiadomosc = wiadomosc.replace("pierdol", "*******");
-			wiadomosc = wiadomosc.replace("rucham", "******");
-			wiadomosc = wiadomosc.replace("cipa", "****");
-			wiadomosc = wiadomosc.replace("kurwy", "*****");
-			Bukkit.broadcastMessage(wiadomosc);
-		} else {
-			e.setCancelled(true);
-			String wiadomosc = (ChatColor.GREEN + "" + ChatColor.BOLD + "Gracz " + ChatColor.GRAY + p.getName() + ChatColor.AQUA + " >> " + ChatColor.GRAY + msg);
-			wiadomosc = wiadomosc.replace("japierdole", "**********");
-			wiadomosc = wiadomosc.replace("suko", "****");
-			wiadomosc = wiadomosc.replace("suka", "****");
-			wiadomosc = wiadomosc.replace("jebana", "******");
-			wiadomosc = wiadomosc.replace("jebany", "******");
-			wiadomosc = wiadomosc.replace("kurwa", "*****");
-			wiadomosc = wiadomosc.replace("pierdole", "********");
-			wiadomosc = wiadomosc.replace("wypierdalaj", "***********");
-			wiadomosc = wiadomosc.replace("spierdalaj", "**********");
-			wiadomosc = wiadomosc.replace("wykurwiaj", "*********");
-			wiadomosc = wiadomosc.replace("chuju", "*****");
-			wiadomosc = wiadomosc.replace("kurwo", "*****");
-			wiadomosc = wiadomosc.replace("cipo", "****");
-			wiadomosc = wiadomosc.replace("pierdolona", "**********");
-			wiadomosc = wiadomosc.replace("pierdol", "*******");
-			wiadomosc = wiadomosc.replace("rucham", "******");
-			wiadomosc = wiadomosc.replace("cipa", "****");
-			wiadomosc = wiadomosc.replace("kurwy", "*****");
-			Bukkit.broadcastMessage(wiadomosc);
-		}
+		if (register != true && getConfig().getBoolean("chatIsEnable") == true) {
+		
+			if	(p.hasPermission("ownServerPlugin.adminGroup")) {
+				e.setCancelled(true);
+				String wiadomosc = (ChatColor.DARK_RED + "" + ChatColor.BOLD + "Administrator " + ChatColor.GRAY + p.getName() + ChatColor.AQUA + " >> " + ChatColor.GOLD + msg.toLowerCase());
+				wiadomosc = wiadomosc.replace("japierdole", "**********");
+				wiadomosc = wiadomosc.replace("suko", "****");
+				wiadomosc = wiadomosc.replace("suka", "****");
+				wiadomosc = wiadomosc.replace("jebana", "******");
+				wiadomosc = wiadomosc.replace("jebany", "******");
+				wiadomosc = wiadomosc.replace("kurwa", "*****");
+				wiadomosc = wiadomosc.replace("pierdole", "********");
+				wiadomosc = wiadomosc.replace("wypierdalaj", "***********");
+				wiadomosc = wiadomosc.replace("spierdalaj", "**********");
+				wiadomosc = wiadomosc.replace("wykurwiaj", "*********");
+				wiadomosc = wiadomosc.replace("chuju", "*****");
+				wiadomosc = wiadomosc.replace("kurwo", "*****");
+				wiadomosc = wiadomosc.replace("cipo", "****");
+				wiadomosc = wiadomosc.replace("pierdolona", "**********");
+				wiadomosc = wiadomosc.replace("pierdol", "*******");
+				wiadomosc = wiadomosc.replace("rucham", "******");
+				wiadomosc = wiadomosc.replace("cipa", "****");
+				wiadomosc = wiadomosc.replace("kurwy", "*****");
+				Bukkit.broadcastMessage(wiadomosc);
+			} else if (p.hasPermission("ownServerPlugin.egzorcystaGroup")){
+				e.setCancelled(true);
+				String wiadomosc = (ChatColor.AQUA + "" + ChatColor.BOLD + "Egzorcysta " + ChatColor.GRAY + p.getName() + ChatColor.AQUA + " >> " + ChatColor.GRAY + msg.toLowerCase());
+				wiadomosc = wiadomosc.replace("japierdole", "**********");
+				wiadomosc = wiadomosc.replace("suko", "****");
+				wiadomosc = wiadomosc.replace("suka", "****");
+				wiadomosc = wiadomosc.replace("jebana", "******");
+				wiadomosc = wiadomosc.replace("jebany", "******");
+				wiadomosc = wiadomosc.replace("kurwa", "*****");
+				wiadomosc = wiadomosc.replace("pierdole", "********");
+				wiadomosc = wiadomosc.replace("wypierdalaj", "***********");
+				wiadomosc = wiadomosc.replace("spierdalaj", "**********");
+				wiadomosc = wiadomosc.replace("wykurwiaj", "*********");
+				wiadomosc = wiadomosc.replace("chuju", "*****");
+				wiadomosc = wiadomosc.replace("kurwo", "*****");
+				wiadomosc = wiadomosc.replace("cipo", "****");
+				wiadomosc = wiadomosc.replace("pierdolona", "**********");
+				wiadomosc = wiadomosc.replace("pierdol", "*******");
+				wiadomosc = wiadomosc.replace("rucham", "******");
+				wiadomosc = wiadomosc.replace("cipa", "****");
+				wiadomosc = wiadomosc.replace("kurwy", "*****");
+				Bukkit.broadcastMessage(wiadomosc);
+			} else if (p.hasPermission("ownServerPlugin.twojaStaraGroup")) {
+				e.setCancelled(true);
+				String wiadomosc = (ChatColor.RED + "" + ChatColor.BOLD + "T" + ChatColor.YELLOW + "" + ChatColor.BOLD + "w" + ChatColor.GREEN + "" + ChatColor.BOLD + "o" + ChatColor.BLUE + "" + ChatColor.BOLD + "j" + ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD + "a" + " " + ChatColor.RED + "" + ChatColor.BOLD + "S" + ChatColor.YELLOW + "" + ChatColor.BOLD + "t" + ChatColor.GREEN + "" + ChatColor.BOLD + "a" + ChatColor.BLUE + "" + ChatColor.BOLD + "r" + ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD + "a "  + ChatColor.GRAY + p.getName() + ChatColor.AQUA + " >> " + ChatColor.GRAY + msg.toLowerCase());
+				wiadomosc = wiadomosc.replace("japierdole", "**********");
+				wiadomosc = wiadomosc.replace("suko", "****");
+				wiadomosc = wiadomosc.replace("suka", "****");
+				wiadomosc = wiadomosc.replace("jebana", "******");
+				wiadomosc = wiadomosc.replace("jebany", "******");
+				wiadomosc = wiadomosc.replace("kurwa", "*****");
+				wiadomosc = wiadomosc.replace("pierdole", "********");
+				wiadomosc = wiadomosc.replace("wypierdalaj", "***********");
+				wiadomosc = wiadomosc.replace("spierdalaj", "**********");
+				wiadomosc = wiadomosc.replace("wykurwiaj", "*********");
+				wiadomosc = wiadomosc.replace("chuju", "*****");
+				wiadomosc = wiadomosc.replace("kurwo", "*****");
+				wiadomosc = wiadomosc.replace("cipo", "****");
+				wiadomosc = wiadomosc.replace("pierdolona", "**********");
+				wiadomosc = wiadomosc.replace("pierdol", "*******");
+				wiadomosc = wiadomosc.replace("rucham", "******");
+				wiadomosc = wiadomosc.replace("cipa", "****");
+				wiadomosc = wiadomosc.replace("kurwy", "*****");
+				Bukkit.broadcastMessage(wiadomosc);
+			} else {
+				e.setCancelled(true);
+				String wiadomosc = (ChatColor.GREEN + "" + ChatColor.BOLD + "Gracz " + ChatColor.GRAY + p.getName() + ChatColor.AQUA + " >> " + ChatColor.GRAY + msg.toLowerCase());
+				wiadomosc = wiadomosc.replace("japierdole", "**********");
+				wiadomosc = wiadomosc.replace("suko", "****");
+				wiadomosc = wiadomosc.replace("suka", "****");
+				wiadomosc = wiadomosc.replace("jebana", "******");
+				wiadomosc = wiadomosc.replace("jebany", "******");
+				wiadomosc = wiadomosc.replace("kurwa", "*****");
+				wiadomosc = wiadomosc.replace("pierdole", "********");
+				wiadomosc = wiadomosc.replace("wypierdalaj", "***********");
+				wiadomosc = wiadomosc.replace("spierdalaj", "**********");
+				wiadomosc = wiadomosc.replace("wykurwiaj", "*********");
+				wiadomosc = wiadomosc.replace("chuju", "*****");
+				wiadomosc = wiadomosc.replace("kurwo", "*****");
+				wiadomosc = wiadomosc.replace("cipo", "****");
+				wiadomosc = wiadomosc.replace("pierdolona", "**********");
+				wiadomosc = wiadomosc.replace("pierdol", "*******");
+				wiadomosc = wiadomosc.replace("rucham", "******");
+				wiadomosc = wiadomosc.replace("cipa", "****");
+				wiadomosc = wiadomosc.replace("kurwy", "*****");
+				Bukkit.broadcastMessage(wiadomosc);
 	
+			}
+		}
 	}
 	
 	@SuppressWarnings("unused")
@@ -302,10 +411,114 @@ public class Main extends JavaPlugin implements CommandExecutor, Listener {
 						reloadConfig();
 						return true;
 					}
+				} else {
+					p.sendMessage(ChatColor.RED + "Argumentem musi byæ on/off");
+					return false;
 				}
 				
 			} else {
 				p.sendMessage(ChatColor.RED + "Podaj prawid³owy argument <on/off>!");
+				return false;
+			}
+			
+		} else if (command.getName().equalsIgnoreCase("register")) {
+			
+			if (args.length > 0) {
+				
+				if (args[0].length() >= 5) {
+				
+					File f = new File("plugins/ServerOwnPlugin/autorization.yml");
+					YamlConfiguration yamlFile = YamlConfiguration.loadConfiguration(f);
+					String password = yamlFile.getString(p.getName() + ".password");
+					
+					if (password == null) {
+						
+						int hashCode = args[0].hashCode();
+						yamlFile.set(p.getName() + ".password", hashCode);
+						
+						try {
+							yamlFile.save(f);
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+						
+						yamlFile.set(p.getName() + ".register", false);
+						
+						try {
+							yamlFile.save(f);
+							p.kickPlayer(ChatColor.GREEN + "Zosta³eœ zarejestrowany!" + "\n" + "Do³¹cz ponownie i zaloguj siê!");
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+						return true;
+					} else {
+						p.sendMessage(ChatColor.RED + "Jesteœ ju¿ zarejestrowany!");
+						return false;
+					}
+				} else {
+					p.sendMessage(ChatColor.RED + "D³ugoœæ has³a musi byæ d³u¿sza ni¿ 4 litery!");
+					return false;
+				}
+				
+			} else {
+				p.sendMessage(ChatColor.RED + "Musisz podaæ has³o!");
+				return false;
+			}
+			
+		} else if (command.getName().equalsIgnoreCase("login")) {
+			
+			if (args.length > 0) {
+				
+				File f = new File("plugins/ServerOwnPlugin/autorization.yml");
+				YamlConfiguration yamlFile = YamlConfiguration.loadConfiguration(f);
+				String password = yamlFile.getString(p.getName() + ".password");
+				
+				Integer hash = args[0].hashCode();
+				
+				if (yamlFile.get(p.getName() + ".password") != null) {
+					
+					if (hash.toString().equals(password)) {
+						
+						yamlFile.set(p.getName() + ".login", false);
+						
+						try {
+							yamlFile.save(f);
+							p.sendMessage(ChatColor.GREEN + "Zosta³eœ zalogowany! Mi³ej gry!");
+						} catch (IOException e) {
+							e.printStackTrace();
+							p.kickPlayer(ChatColor.RED + "Przykro mi ale wyst¹pi³ nieoczekiwany b³¹d" + "\n" + "WejdŸ na serwer jeszcze raz i powiedz mamie");
+						}
+						return true;
+					} else {
+						p.sendMessage(ChatColor.RED + "Podaj prawid³owe has³o!");
+						if (yamlFile.get(p.getName() + ".tryToLogin") == null) { 
+							yamlFile.set(p.getName() + ".tryToLogin", 1);
+							try {
+								yamlFile.save(f);
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						} else {
+							yamlFile.set(p.getName() + ".tryToLogin", yamlFile.getInt(p.getName() + ".tryToLogin", 1) + 1);
+							if (yamlFile.getInt(p.getName() + ".tryToLogin") >= 4) {
+								p.kickPlayer(ChatColor.RED + "Zbyt du¿a iloœæ prób zalogowañ" + "\n" + "Proszê do³¹czyæ jeszcze raz");
+							}
+							try {
+								yamlFile.save(f);
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+						return false;
+					}
+					
+				} else {
+					
+					p.sendMessage(ChatColor.RED + "Aby u¿yc tej komendy najpierw musisz siê zarejestrowaæ!");
+					
+				}
+			} else {
+				p.sendMessage(ChatColor.RED + "Proszê podaæ has³o!");
 				return false;
 			}
 			
